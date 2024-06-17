@@ -13,7 +13,7 @@ public class PlaceDataLoader {
     private final OpenAPIService openAPIService;
 
     /**
-     * 의존성 주입 후
+     * 의존성 주입 후 api 호출 및 저장 로직 실행
      */
     @PostConstruct
     public void dataProcess() {

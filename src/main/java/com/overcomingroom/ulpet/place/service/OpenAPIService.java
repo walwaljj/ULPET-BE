@@ -52,7 +52,7 @@ public class OpenAPIService {
                 .uri(uriBuilder -> uriBuilder
                         .path("/searchKeyword1")
                         .queryParam("serviceKey", serviceKey)
-                        .queryParam("numOfRows", "200") // 생략 가능
+                        .queryParam("numOfRows", "200")
                         .queryParam("MobileOS", "ETC")
                         .queryParam("MobileApp", "AppTest")
                         .queryParam("_type", dataType)
