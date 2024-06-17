@@ -14,14 +14,7 @@ import lombok.NoArgsConstructor;
 public class PlaceImage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @OneToOne
-    @JoinColumn(name = "place_id")
-    private Place place;
+    private Long placeId;
 
     private String imageUrl;
-
-    private String representativeImage;
 }

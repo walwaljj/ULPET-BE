@@ -1,19 +1,18 @@
 package com.overcomingroom.ulpet.place.domain.dto;
 
-import com.overcomingroom.ulpet.place.domain.entity.Category;
+import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.overcomingroom.ulpet.place.domain.entity.PlaceImage;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
 public class PlaceResponseDto {
+
+    private Long contentId;
 
     private String placeName; // 장소 명
 
@@ -25,20 +24,20 @@ public class PlaceResponseDto {
 
     private Double lon; // 경도
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt; // 업데이트 일
+    @Enumerated(EnumType.STRING)
+    private Category category; // 카테고리
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
+    private PlaceImage placeImage; // 장소 이미지
 
     public static PlaceResponseDto toEntity(Place place) {
         return PlaceResponseDto.builder()
+                .contentId(place.getContentId())
                 .placeName(place.getPlaceName())
                 .placeDescription(place.getPlaceDescription())
                 .address(place.getAddress())
                 .lat(place.getLat())
                 .lon(place.getLat())
+                .category(place.getCategory())
                 .build();
     }
 

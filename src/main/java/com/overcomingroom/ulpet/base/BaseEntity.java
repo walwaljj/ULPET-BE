@@ -1,13 +1,10 @@
 package com.overcomingroom.ulpet.base;
 
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedBy;
 
 import java.time.LocalDateTime;
 
@@ -15,12 +12,12 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @MappedSuperclass
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
 
-    @CreatedDate
     private LocalDateTime createdAt; // 생성 일
 
-    @LastModifiedDate
     private LocalDateTime updatedAt; // 업데이트 일
+
+    @CreatedBy
+    private Long createdBy; // 생성한 사용자의 ID
 }
