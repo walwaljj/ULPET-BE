@@ -19,10 +19,11 @@ public class PlaceDataLoader {
     public void dataProcess() {
 
         // tourApi 호출
-        String tourData = openAPIService.getTourDataMono();
+        openAPIService.tourApiProcess();
 
-        // place 객체 변환 및 저장
-        openAPIService.convertFromTourApiToPlace(tourData);
+        // 반려동물 동반가능 시설 호출
+        openAPIService.petsAllowedApiProcess();
+
     }
 
 }

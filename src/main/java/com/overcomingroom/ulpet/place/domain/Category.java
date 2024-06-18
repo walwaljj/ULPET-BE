@@ -20,7 +20,7 @@ public enum Category {
     ANIMAL_GROOMING_SALON(100,"미용"),
     ANIMAL_HOSPITAL(200,"동물병원"),
     ANIMAL_PHARMACY(201,"동물약국"),
-    ANIMAL_GSHOPPING(300,"반려동물용품");
+    ANIMAL_SHOPPING(300,"반려동물용품");
 
     private final int code;
     private final String categoryName;
