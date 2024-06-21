@@ -45,4 +45,13 @@ public class Place extends BaseEntity {
     public static double roundValue(double originalValue) {
         return Math.floor(originalValue * 1000000) / 1000000.0;
     }
+
+    public void modifyPlace(Place place) {
+        this.contentId = place.getContentId();
+        this.placeName = place.getPlaceName();
+        this.placeDescription = place.getPlaceDescription();
+        this.address = place.getAddress();
+        this.lat = place.getLat();
+        this.lon = place.getLon();
+    }
 }

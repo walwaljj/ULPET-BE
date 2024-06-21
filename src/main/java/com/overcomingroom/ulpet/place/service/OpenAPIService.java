@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -112,7 +113,7 @@ public class OpenAPIService {
     }
 
     /**
-     * tour Api 데이터를 파싱하고, 저장합니다.
+     * tour Api 데이터를 파싱하고, List에 저장합니다.
      *
      * @param tourApiData String 타입의 tourApiData
      */
@@ -140,7 +141,8 @@ public class OpenAPIService {
 
                 // 카테고리를 가지지 않는 데이터 제외
                 if (category != null) {
-                    Place place = placeRepository.save(Place.builder()
+
+                    Place place = Place.builder()
                             .placeName(jsonData.get("title").toString())
                             .contentId(Long.parseLong(jsonData.get("contentid").toString()))
                             .address(address)
@@ -150,15 +152,92 @@ public class OpenAPIService {
                             .createdAt(createdtime)
                             .updatedAt(updatedtime)
                             .createdBy(Long.valueOf(systemId))
-                            .build());
+                            .build();
 
-                    placeImageRepository.save(PlaceImage.builder()
-                            .placeId(place.getId())
-                            .imageUrl(jsonData.get("firstimage").toString()).build());
+                    String imageUrl = jsonData.get("firstimage").toString();
+
+                    saveOrUpdateCheckByContentId(place, imageUrl);
                 }
-
             }
         }
+    }
+
+    /**
+     * 유니크 키인 컨텐츠 ID로 업데이트나 저장을 해야하는지 체크합니다.
+     *
+     * @param place
+     * @param imageUrl
+     */
+    private void saveOrUpdateCheckByContentId(Place place, String imageUrl) {
+
+        // contentId 로 장소 검색
+        Optional<Place> optionalPlaceByContentId = placeRepository.findByContentId(place.getContentId());
+        // 정보가 없다면 저장
+        if (optionalPlaceByContentId.isEmpty()) {
+            savePlace(place, imageUrl);
+            return;
+        }
+
+        // 장소 정보가 있다면 업데이트
+        place.modifyPlace(place);
+        imageUpdateCheck(imageUrl, optionalPlaceByContentId.get().getId());
+    }
+
+    /**
+     * 이미지 정보를 업데이트 해야하는지 확인합니다.
+     *
+     * @param imageUrl
+     * @param placeId
+     */
+    private void imageUpdateCheck(String imageUrl, Long placeId) {
+        // image 정보 확인
+        PlaceImage placeImage = placeImageRepository.findByPlaceId(placeId);
+
+        // 이미지가 업데이트 됐는지 확인, 업데이트 됐다면 저장.
+        if (!imageUrl.equals(placeImage.getImageUrl())) {
+            placeImage.modifyPlaceImageUrl(imageUrl);
+            placeImageRepository.save(placeImage);
+        }
+    }
+
+    /**
+     * 컨텐츠 ID를 가지지 않는 행에 대해 장소 + 주소 조합으로 검색을 합니다.
+     * 이 후 업데이트나 저장을 해야하는지 체크합니다.
+     *
+     * @param place
+     * @param imageUrl
+     */
+    private void saveOrUpdateCheckByAddressAndPlaceName(Place place, String imageUrl) {
+
+        Optional<Place> optionalPlace = placeRepository.findByPlaceNameAndAddress(place.getPlaceName(), place.getAddress());
+
+        // 만약 결과가 없다면 새로운 장소로 저장.
+        if (!optionalPlace.isPresent()) {
+            savePlace(place, imageUrl);
+            return;
+        }
+
+        // 주소 + 장소명 검색 결과가 있다면 변경된 속성만 업데이트
+        Place updatePlace = optionalPlace.get();
+
+        // DynamicUpdate로 변경된 속성만 쿼리가 날아감
+        place.modifyPlace(updatePlace);
+    }
+
+
+    /**
+     * 장소, 이미지 저장
+     *
+     * @param place
+     * @param imageUrl
+     */
+    private void savePlace(Place place, String imageUrl) {
+
+        Place savePlace = placeRepository.save(place);
+        placeImageRepository.save(
+                PlaceImage.builder()
+                        .placeId(savePlace.getId())
+                        .imageUrl(imageUrl).build());
     }
 
     /**
@@ -193,7 +272,6 @@ public class OpenAPIService {
                             .queryParam("serviceKey", petAllowedApiServiceKey)
                             .queryParam("page", currentPage)
                             .queryParam("perPage", PER_PAGE)
-//                            .queryParam("returnType", dataType)
                             .build())
                     .retrieve()
                     .bodyToMono(String.class)
@@ -235,7 +313,7 @@ public class OpenAPIService {
                         LocalDateTime createdtime = BaseEntityDateTimeUtil.localDateToLocalDateTimeParse(jsonData.get("최종작성일").toString(), PET_ALLOWED_API_DATETIME_PATTERN);
                         LocalDateTime updatedtime = BaseEntityDateTimeUtil.localDateToLocalDateTimeParse(jsonData.get("최종작성일").toString(), PET_ALLOWED_API_DATETIME_PATTERN);
 
-                        placeRepository.save(Place.builder()
+                        Place place = Place.builder()
                                 .placeName(jsonData.get("시설명").toString())
                                 .address(jsonData.get("도로명주소").toString())
                                 .placeDescription(jsonData.get("기본 정보_장소설명").toString())
@@ -245,7 +323,9 @@ public class OpenAPIService {
                                 .createdAt(createdtime)
                                 .updatedAt(updatedtime)
                                 .createdBy(Long.valueOf(systemId))
-                                .build());
+                                .build();
+
+                        saveOrUpdateCheckByAddressAndPlaceName(place, null); // 해당 api는 장소 이미지를 제공하고 있지 않음.
                     }
 
                 }
