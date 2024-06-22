@@ -46,6 +46,7 @@ dependencies {
 	// WEB
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	testImplementation 'org.projectlombok:lombok:1.18.28'
 
 	// LOMBOK
 	compileOnly 'org.projectlombok:lombok'
