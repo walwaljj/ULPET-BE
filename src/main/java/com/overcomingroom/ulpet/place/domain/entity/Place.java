@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -35,6 +38,9 @@ public class Place extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Category category;
+
+    @ManyToMany
+    private List<Feature> features = new ArrayList<>();
 
     /**
      * 위도, 경도를 소숫점 6자리 까지 변환함.
