@@ -1,16 +1,20 @@
 package com.overcomingroom.ulpet.place.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
-import com.overcomingroom.ulpet.place.domain.entity.PlaceImage;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PlaceResponseDto {
+
+    private Long id;
 
     private Long contentId;
 
@@ -27,10 +31,12 @@ public class PlaceResponseDto {
     @Enumerated(EnumType.STRING)
     private Category category; // 카테고리
 
-    private PlaceImage placeImage; // 장소 이미지
+    @Setter
+    private String placeImageUrl; // 장소 이미지 url
 
-    public static PlaceResponseDto toEntity(Place place) {
+    public static PlaceResponseDto of(Place place) {
         return PlaceResponseDto.builder()
+                .id(place.getId())
                 .contentId(place.getContentId())
                 .placeName(place.getPlaceName())
                 .placeDescription(place.getPlaceDescription())
@@ -40,5 +46,4 @@ public class PlaceResponseDto {
                 .category(place.getCategory())
                 .build();
     }
-
 }
