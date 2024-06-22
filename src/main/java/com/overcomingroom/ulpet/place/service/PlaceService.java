@@ -36,8 +36,9 @@ public class PlaceService {
 
         // 이미지 매핑
         for (PlaceResponseDto placeResponseDto : placeList) {
-            String imageUrl = getImageUrlByPlaceId(placeResponseDto.getContentId());
+            String imageUrl = getImageUrlByPlaceId(placeResponseDto.getId());
             placeResponseDto.setPlaceImageUrl(imageUrl);
+            log.info(placeResponseDto.getPlaceImageUrl());
         }
 
         return placeList;
