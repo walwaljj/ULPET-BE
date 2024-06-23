@@ -41,7 +41,7 @@ public class PlaceController {
     @Operation(summary = "장소 상세", description = "장소 상세")
     public ResponseEntity<ResResult> placeDetail(@PathVariable("placeId") Long placeId) {
 
-        ResponseCode resultCode = ResponseCode.PLACE_SEARCH;
+        ResponseCode resultCode = ResponseCode.PLACE_DETAIL;
 
         return ResponseEntity.ok(
                 ResResult.builder()
