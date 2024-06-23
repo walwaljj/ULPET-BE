@@ -93,19 +93,37 @@ class PlaceControllerTest {
                 .andExpect(jsonPath("$.data.size()").value(expectedSize))
                 .andDo(print());
     }
+
     @DisplayName("상세 조회 테스트")
     @Test
-    void 장소_상세()throws Exception {
+    void 장소_상세() throws Exception {
 
         Long placeId = 100L;
 
         Place place = placeRepository.findById(placeId).get();
 
         //when, then
-        mockMvc.perform(get("/v1/places/" + placeId )
+        mockMvc.perform(get("/v1/places/" + placeId)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.placeName").value(place.getPlaceName()))
+                .andDo(print());
+    }
+
+    @DisplayName("신규 등록 장소 조회 테스트")
+    @Test
+    void 신규_등록_장소_조회() throws Exception {
+
+        Place place = placeRepository.findAllByOrderByCreatedAtDesc().get(0);
+        Long numberOfPlaces = 3L;
+
+        //when, then
+        mockMvc.perform(get("/v1/places/new")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .param("numberOfPlaces", String.valueOf(numberOfPlaces)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].placeName").value(place.getPlaceName()))
+                .andExpect(jsonPath("$.data.size()").value(numberOfPlaces))
                 .andDo(print());
     }
 

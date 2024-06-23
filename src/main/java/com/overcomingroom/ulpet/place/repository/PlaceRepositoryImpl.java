@@ -47,6 +47,35 @@ public class PlaceRepositoryImpl extends Querydsl4RepositorySupport implements P
         return placeResponseDtoList;
     }
 
+    /**
+     * 새로 등록된 장소를 반환합니다.
+     *
+     * @param numberOfPlaces 보여 줄 장소 수
+     * @return 새로 등록된 장소 정보 List<PlaceResponseDto>
+     */
+    @Override
+    public List<PlaceResponseDto> newRegisterPlaces(Long numberOfPlaces) {
+
+        JPAQuery<Place> placeJPAQuery = selectFrom(place)
+                .orderBy(place.createdAt.desc());// 최근 등록 순 정렬
+
+        // 만약 numberOfPlaces 가 null이 아니라면 limit 설정
+        if (numberOfPlaces != null) {
+            placeJPAQuery.limit(numberOfPlaces);
+        }
+
+        List<Place> placeList = placeJPAQuery.fetch();
+
+        // 보여 줄 장소 수
+        List<PlaceResponseDto> placeResponseDtoList = new ArrayList<>();
+
+        for (Place place : placeList) {
+            placeResponseDtoList.add(PlaceResponseDto.of(place));
+        }
+
+        return placeResponseDtoList;
+    }
+
     private BooleanExpression categoryFilter(Category category) {
         return category != null ? place.category.eq(category) : null;
     }

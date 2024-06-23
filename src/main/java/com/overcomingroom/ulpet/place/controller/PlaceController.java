@@ -52,4 +52,22 @@ public class PlaceController {
                         .build()
         );
     }
+
+    @GetMapping("/new")
+    @Operation(summary = "신규 등록 장소", description = "신규 등록 장소")
+    public ResponseEntity<ResResult> newRegisterPlace(
+            @RequestParam(value = "numberOfPlaces", required = false) Long numberOfPlaces
+    ) {
+
+        ResponseCode resultCode = ResponseCode.NEW_PLACE_LIST_SUCCESSFULLY_VIEWED;
+
+        return ResponseEntity.ok(
+                ResResult.builder()
+                        .responseCode(resultCode)
+                        .code(resultCode.getCode())
+                        .message(resultCode.getMessage())
+                        .data(placeService.newRegisterPlaces(numberOfPlaces))
+                        .build()
+        );
+    }
 }
