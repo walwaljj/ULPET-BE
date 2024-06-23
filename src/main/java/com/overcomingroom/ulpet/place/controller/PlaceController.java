@@ -7,19 +7,16 @@ import com.overcomingroom.ulpet.response.ResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/search")
+@RequestMapping("/v1/places")
 public class PlaceController {
 
     private final PlaceService placeService;
 
-    @GetMapping("")
+    @GetMapping("/search")
     @Operation(summary = "장소 목록", description = "조건에 따른 장소 검색을 하고, 장소 목록을 불러 옵니다.")
     public ResponseEntity<ResResult> search(
             @RequestParam(value = "category", required = false) Category category, // 미입력 시 모든 카테고리 조회
@@ -37,6 +34,22 @@ public class PlaceController {
                         .data(placeService.searchPlaces(category, feature, searchKeyword))
                         .build()
 
+        );
+    }
+
+    @GetMapping("/{placeId}")
+    @Operation(summary = "장소 상세", description = "장소 상세")
+    public ResponseEntity<ResResult> placeDetail(@PathVariable("placeId") Long placeId) {
+
+        ResponseCode resultCode = ResponseCode.PLACE_SEARCH;
+
+        return ResponseEntity.ok(
+                ResResult.builder()
+                        .responseCode(resultCode)
+                        .code(resultCode.getCode())
+                        .message(resultCode.getMessage())
+                        .data(placeService.getPlaceDetail(placeId))
+                        .build()
         );
     }
 }

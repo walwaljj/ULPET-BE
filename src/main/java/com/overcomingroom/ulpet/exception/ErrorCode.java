@@ -13,7 +13,13 @@ public enum ErrorCode {
     LOGIN_ERROR(HttpStatus.BAD_REQUEST, "로그인 오류"),
     ACCESS_DENIED(HttpStatus.BAD_REQUEST, "접근 권한이 없습니다."),
 
+    // 위치
     LOCATION_INFORMATION_NOT_FOUND(HttpStatus.NOT_FOUND, "위치 정보를 찾을 수 없습니다."),
+
+    // 장소
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소 정보를 찾을 수 없습니다."),
+
+    // 입력 및 응답
     API_CALL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 응답 형식입니다."),
 
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 유효하지 않습니다.");
