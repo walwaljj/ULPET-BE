@@ -1,7 +1,10 @@
 package com.overcomingroom.ulpet.place.service;
 
+import com.overcomingroom.ulpet.exception.CustomException;
+import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.dto.PlaceResponseDto;
+import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.domain.entity.PlaceImage;
 import com.overcomingroom.ulpet.place.repository.PlaceImageRepository;
 import com.overcomingroom.ulpet.place.repository.PlaceRepository;
@@ -56,5 +59,22 @@ public class PlaceService {
             return null;
         }
         return placeImage.getImageUrl();
+    }
+
+
+    /**
+     * placeId를 이욯해 장소 상세를 반환합니다.
+     *
+     * @param placeId placeId
+     * @return PlaceResponseDto
+     */
+    public PlaceResponseDto getPlaceDetail(Long placeId) {
+
+        Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
+
+        PlaceResponseDto placeResponseDto = PlaceResponseDto.of(place);
+        placeResponseDto.setPlaceImageUrl(getImageUrlByPlaceId(placeId));
+
+        return placeResponseDto;
     }
 }
