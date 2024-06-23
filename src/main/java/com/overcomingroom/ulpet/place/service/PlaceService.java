@@ -77,4 +77,25 @@ public class PlaceService {
 
         return placeResponseDto;
     }
+
+
+    /**
+     * 새로 등록된 장소를 반환합니다.
+     *
+     * @param numberOfPlaces 보여줄 장소 수
+     * @return 새로 등록된 장소 정보 List<PlaceResponseDto>
+     */
+    public List<PlaceResponseDto> newRegisterPlaces(Long numberOfPlaces) {
+
+        List<PlaceResponseDto> placeList = placeRepository.newRegisterPlaces(numberOfPlaces);
+
+        // 이미지 매핑
+        for (PlaceResponseDto placeResponseDto : placeList) {
+            String imageUrl = getImageUrlByPlaceId(placeResponseDto.getId());
+            placeResponseDto.setPlaceImageUrl(imageUrl);
+            log.info(placeResponseDto.getPlaceImageUrl());
+        }
+
+        return placeList;
+    }
 }

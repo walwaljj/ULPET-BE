@@ -18,7 +18,9 @@ public enum ResponseCode {
     TOUR_API_CALL_SUCCESSFUL(HttpStatus.OK, "200", "tour api 호출 성공"),
 
     // Place
-    PLACE_SEARCH(HttpStatus.OK, "200", "장소 통합 검색 성공");
+    PLACE_SEARCH(HttpStatus.OK, "200", "장소 통합 검색 성공"),
+    NEW_PLACE_LIST_SUCCESSFULLY_VIEWED(HttpStatus.OK, "200", "새로운 장소 목록 조회 성공"),
+    PLACE_DETAIL(HttpStatus.OK, "200", "장소 상세 조회 성공");
 
     private final HttpStatus httpStatus;
     private final String code;
