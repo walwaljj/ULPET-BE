@@ -38,3 +38,6 @@ out/
 
 ### Q-class ###
 /src/main/generated/querydsl/
+
+### Secret ###
+application-secret.yml
