@@ -1,0 +1,222 @@
+package com.overcomingroom.ulpet.member.service;
+
+import com.overcomingroom.ulpet.auth.domain.dto.JwtResponseDto;
+import com.overcomingroom.ulpet.auth.service.JwtService;
+import com.overcomingroom.ulpet.exception.CustomException;
+import com.overcomingroom.ulpet.exception.ErrorCode;
+import com.overcomingroom.ulpet.member.domain.dto.LoginRequestDto;
+import com.overcomingroom.ulpet.member.domain.dto.MemberInfoResponseDto;
+import com.overcomingroom.ulpet.member.domain.dto.SignUpRequestDto;
+import com.overcomingroom.ulpet.member.domain.dto.TempPasswordAndNickname;
+import com.overcomingroom.ulpet.member.domain.dto.UpdateMemberRequestDto;
+import com.overcomingroom.ulpet.member.domain.entity.Member;
+import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
+import com.overcomingroom.ulpet.member.repository.MemberRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class MemberService implements UserDetailsService {
+
+  private final MemberRepository memberRepository;
+  private final JwtService jwtService;
+  private final PasswordEncoder passwordEncoder;
+  private final JavaMailSender javaMailSender;
+  @Value("${spring.mail.username}")
+  private String id;
+
+  public void sendPasswordEmail(String username) {
+    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+    TempPasswordAndNickname tempPasswordAndNickname = findPassword(username);
+    try {
+      mimeMessage.addRecipients(MimeMessage.RecipientType.TO, username);
+      mimeMessage.setSubject("[ULPET] 임시 비밀번호 발급");
+
+      String message = "<!DOCTYPE html>" +
+          "<html xmlns:th=\"http://www.thymeleaf.org\">" +
+          "<body>" +
+          "<div style=\"margin:100px;\">" +
+          "<h1> 안녕하세요. " + tempPasswordAndNickname.nickname() + "님</h1>" +
+          "<h1> 울산의 반려동물 동반 장소 인증 플랫폼 <span class=\"h1\" style=\"color: #0f7e89\">ULPET</span> 입니다.</h1>" +
+          "<br>" +
+          "<p> 임시 비밀번호를 발급드립니다. 아래 발급된 비밀번호로 로그인해주세요. </p>" +
+          "<br>" +
+          "<div align=\"center\" style=\"border:1px solid black; font-family:verdana;\">" +
+          "<h3 style=\"color:blue\"> 임시 비밀번호 입니다. </h3>" +
+          "<div style=\"font-size:130%\">" + tempPasswordAndNickname.tempPassword() + "</div>" +
+          "<br>" +
+          "</div>" +
+          "<br/>" +
+          "</div>" +
+          "</body>" +
+          "</html>";
+
+      mimeMessage.setText(message, "utf-8", "html");
+      mimeMessage.setFrom(new InternetAddress(id, "울펫_관리자"));
+      javaMailSender.send(mimeMessage);
+    } catch (MessagingException | UnsupportedEncodingException e) {
+      throw new CustomException(ErrorCode.EMAIL_SEND_FAILED);
+    }
+  }
+
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    return memberRepository.findByUsername(username).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+  }
+
+  public Member getAuthenticatedUser(Long memberId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    var memberEntity = (MemberEntity) authentication.getPrincipal();
+    var member = Member.from(memberEntity);
+    if (!Objects.equals(memberId, memberEntity.getMemberId())) {
+      throw new CustomException(ErrorCode.MEMBER_INVALID);
+    }
+    return member;
+  }
+
+  public Long signUp(SignUpRequestDto signUpRequestDto) {
+    memberRepository
+        .findByUsername(signUpRequestDto.username())
+        .ifPresent(
+            member -> {
+              throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST);
+            }
+        );
+    var memberEntity = memberRepository.save(
+        MemberEntity.of(
+            signUpRequestDto.username(),
+            passwordEncoder.encode(signUpRequestDto.password()),
+            signUpRequestDto.nickname(),
+            signUpRequestDto.profileImage()
+        )
+    );
+    return Member.from(memberEntity).memberId();
+  }
+
+  public JwtResponseDto login(LoginRequestDto loginRequestDto) {
+    var member = loadUserByUsername(loginRequestDto.username());
+    if (passwordEncoder.matches(loginRequestDto.password(), member.getPassword())) {
+      return JwtResponseDto.builder()
+          .accessToken(jwtService.generateAccessToken(member))
+          .refreshToken(jwtService.generateRefreshToken(member))
+          .build();
+    } else {
+      throw new CustomException(ErrorCode.LOGIN_ERROR);
+    }
+  }
+
+  public JwtResponseDto reissueToken(HttpServletRequest request) {
+    var refreshToken = request.getHeader(HttpHeaders.AUTHORIZATION).substring(7);
+    var member = loadUserByUsername(jwtService.getUsername(refreshToken));
+    return JwtResponseDto.builder()
+        .accessToken(jwtService.generateAccessToken(member))
+        .refreshToken(jwtService.generateRefreshToken(member))
+        .build();
+  }
+
+  public Long updateMember(Long memberId, UpdateMemberRequestDto updateMemberRequestDto) {
+    var member = getAuthenticatedUser(memberId);
+
+    var memberEntity = memberRepository.save(
+        MemberEntity.of(
+            memberId,
+            member.username(),
+            passwordEncoder.encode(updateMemberRequestDto.password()),
+            updateMemberRequestDto.nickname(),
+            updateMemberRequestDto.profileImage(),
+            member.familiarity()
+        )
+    );
+
+    return Member.from(memberEntity).memberId();
+  }
+
+  public MemberInfoResponseDto getMemberInfo(Long memberId) {
+    var member = getAuthenticatedUser(memberId);
+
+    return MemberInfoResponseDto.builder()
+        .memberId(member.memberId())
+        .username(member.username())
+        .nickname(member.nickname())
+        .profileImage(member.profileImage())
+        .familiarity(member.familiarity())
+        .build();
+  }
+
+  public void withdrawalMember(Long memberId) {
+    var member = getAuthenticatedUser(memberId);
+    memberRepository.deleteById(member.memberId());
+  }
+
+  public TempPasswordAndNickname findPassword(String username) {
+    String tempPassword = generateTempPassword();
+    var member = memberRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+    memberRepository.save(
+        MemberEntity.of(
+            member.getMemberId(),
+            member.getUsername(),
+            passwordEncoder.encode(tempPassword),
+            member.getNickname(),
+            member.getProfileImage(),
+            member.getFamiliarity()
+        )
+    );
+    return TempPasswordAndNickname.builder()
+        .tempPassword(tempPassword)
+        .nickname(member.getNickname())
+        .build();
+  }
+
+  public static String generateTempPassword() {
+    final String DIGITS = "0123456789";
+    final String LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    final String SPECIAL_CHARACTERS = "!@#$%^&*()-_+=<>?/{}~|";
+    final String ALL_CHARACTERS = DIGITS + LETTERS + SPECIAL_CHARACTERS;
+    final SecureRandom RANDOM = new SecureRandom();
+
+    int length = RANDOM.nextInt(9) + 8; // Generates a length between 8 and 16
+    StringBuilder password = new StringBuilder(length);
+
+    password.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));
+    password.append(LETTERS.charAt(RANDOM.nextInt(LETTERS.length())));
+    password.append(SPECIAL_CHARACTERS.charAt(RANDOM.nextInt(SPECIAL_CHARACTERS.length())));
+
+    for (int i = 3; i < length; i++) {
+      password.append(ALL_CHARACTERS.charAt(RANDOM.nextInt(ALL_CHARACTERS.length())));
+    }
+
+    List<Character> passwordChars = new ArrayList<>();
+    for (char c : password.toString().toCharArray()) {
+      passwordChars.add(c);
+    }
+    Collections.shuffle(passwordChars);
+
+    StringBuilder shuffledPassword = new StringBuilder();
+    for (char c : passwordChars) {
+      shuffledPassword.append(c);
+    }
+
+    return shuffledPassword.toString();
+  }
+
+}
