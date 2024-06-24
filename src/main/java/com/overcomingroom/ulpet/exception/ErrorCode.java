@@ -18,6 +18,9 @@ public enum ErrorCode {
 
     // 장소
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소 정보를 찾을 수 없습니다."),
+    PLACE_ALREADY_SAVED_TO_WISHLIST(HttpStatus.BAD_REQUEST, "이미 위시리스트에 추가된 장소입니다."),
+    PLACE_NOT_SAVED_IN_WISHLIST(HttpStatus.BAD_REQUEST, "위시리스트에 저장되지 않은 장소입니다."),
+
 
     // 입력 및 응답
     API_CALL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 응답 형식입니다."),
