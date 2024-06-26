@@ -1,4 +1,4 @@
-package com.overcomingroom.ulpet.user.domain.entity;
+package com.overcomingroom.ulpet.member.domain.entity;
 
 import com.overcomingroom.ulpet.base.BaseEntity;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +16,13 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Users extends BaseEntity {
+public class MemberEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long memberId;
+
+    private String username;
 
     private String email;
 
@@ -35,6 +36,5 @@ public class Users extends BaseEntity {
 
     @ManyToMany
     private List<Place> wishList = new ArrayList<>();
-
 
 }

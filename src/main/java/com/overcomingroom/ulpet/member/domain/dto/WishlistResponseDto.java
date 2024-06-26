@@ -1,7 +1,7 @@
-package com.overcomingroom.ulpet.user.domain.dto;
+package com.overcomingroom.ulpet.member.domain.dto;
 
+import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
-import com.overcomingroom.ulpet.user.domain.entity.Users;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,12 +9,12 @@ import lombok.Getter;
 @Getter
 public class WishlistResponseDto {
     private Long placeId;
-    private Long userId;
+    private Long memberId;
 
-    public static WishlistResponseDto of(Place place, Users user){
+    public static WishlistResponseDto of(Place place, MemberEntity member) {
         return WishlistResponseDto.builder()
                 .placeId(place.getId())
-                .userId(user.getId())
+                .memberId(member.getMemberId())
                 .build();
     }
 }
