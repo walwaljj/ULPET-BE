@@ -44,7 +44,7 @@ public class MemberEntity extends BaseEntityMember implements UserDetails {
     @Column(nullable = false)
     private String nickname;
 
-    private String profile_image;
+    private String profileImage;
 
     private Float familiarity = 0.0f;
 
