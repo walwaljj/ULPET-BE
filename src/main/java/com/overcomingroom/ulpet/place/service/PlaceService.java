@@ -2,6 +2,7 @@ package com.overcomingroom.ulpet.place.service;
 
 import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
+import com.overcomingroom.ulpet.member.service.WishlistService;
 import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.dto.PlaceResponseDto;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
@@ -11,6 +12,7 @@ import com.overcomingroom.ulpet.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class PlaceService {
 
     private final PlaceRepository placeRepository;
     private final PlaceImageRepository placeImageRepository;
+    private final WishlistService wishlistService;
 
 
     /**
@@ -97,5 +100,20 @@ public class PlaceService {
         }
 
         return placeList;
+    }
+
+    /**
+     * 장소를 삭제합니다.
+     */
+    @Transactional
+    public void deletePlace(Long placeId) {
+
+        Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
+
+        // 위시리스트에서 장소 삭제
+        wishlistService.PreRemovePlaceFromWishList(place);
+
+        // 장소 삭제
+        placeRepository.delete(place);
     }
 }
