@@ -20,11 +20,18 @@ import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +40,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -102,13 +110,23 @@ public class MemberService implements UserDetailsService {
               throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST);
             }
         );
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put("lang", "ko");
+    HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+    RestTemplate restTemplate = new RestTemplate();
+    ResponseEntity<String> responseEntity = restTemplate.postForEntity("https://www.rivestsoft.com/nickname/getRandomNickname.ajax", requestEntity, String.class);
+    JSONObject jsonObject = new JSONObject(responseEntity.getBody());
+    String nickname = jsonObject.get("data").toString();
+
     var memberEntity = memberRepository.save(
         MemberEntity.of(
             signUpRequestDto.username(),
             passwordEncoder.encode(signUpRequestDto.password()),
-            signUpRequestDto.nickname(),
-            signUpRequestDto.profileImage()
-        )
+            nickname,
+            "https://avatar.iran.liara.run/public/" + (new Random().nextInt(100) + 1))
     );
     return Member.from(memberEntity).memberId();
   }
