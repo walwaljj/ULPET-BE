@@ -9,7 +9,16 @@ import org.springframework.http.ResponseEntity;
 @ToString
 public enum ResponseCode {
     // Member
-    USER_INFO_GET_SUCCESSFUL(HttpStatus.OK, "200", "멤버 정보 조회 성공"),
+    MEMBER_INFO_GET_SUCCESSFUL(HttpStatus.OK, "200", "멤버 정보 조회 성공"),
+    MEMBER_SIGN_UP_SUCCESS(HttpStatus.OK, "200", "회원가입 성공"),
+    MEMBER_WITHDRAWAL_SUCCESS(HttpStatus.OK, "200", "회원탈퇴 성공"),
+    MEMBER_UPDATE_SUCCESS(HttpStatus.OK,"200", "회원정보 수정 성공"),
+
+    // Email
+    EMAIL_SEND_SUCCESS(HttpStatus.OK, "200", "이메일 전송 성공"),
+
+    // Auth
+    TOKEN_REISSUE_SUCCESS(HttpStatus.OK, "200", "토큰 재발급 성공"),
 
     // OAuth,
     LOGIN_SUCCESSFUL(HttpStatus.OK, "200", "로그인 성공"),

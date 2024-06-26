@@ -8,10 +8,14 @@ public enum ErrorCode {
     // Member
     MEMBER_INVALID(HttpStatus.BAD_REQUEST, "멤버 정보가 유효하지 않습니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "멤버를 찾을 수 없습니다."),
+    MEMBER_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 회원입니다."),
+
+    // Email
+    EMAIL_SEND_FAILED(HttpStatus.BAD_REQUEST, "이메일 전송에 실패했습니다."),
 
     // OAuth
     LOGIN_ERROR(HttpStatus.BAD_REQUEST, "로그인 오류"),
-    ACCESS_DENIED(HttpStatus.BAD_REQUEST, "접근 권한이 없습니다."),
+    ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "접근 권한이 없습니다."),
 
     // 위치
     LOCATION_INFORMATION_NOT_FOUND(HttpStatus.NOT_FOUND, "위치 정보를 찾을 수 없습니다."),
