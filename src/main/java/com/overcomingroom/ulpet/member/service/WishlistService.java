@@ -31,9 +31,9 @@ public class WishlistService {
      * @param memberId
      * @return WishlistResponseDto
      */
-    public WishlistResponseDto placeAddedToWishlist(Long placeId, Long memberId) {
-        // memberID 로 유저 찾기
-        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    public WishlistResponseDto placeAddedToWishlist(Long placeId, Long memberId, String username) {
+        // 접근 권한 확인 후 Member 반환.
+        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
 
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
@@ -54,15 +54,30 @@ public class WishlistService {
     }
 
     /**
+     * 회원 접근 권한 확인, 확인 후 회원 정보 반환
+     *
+     * @param memberId
+     * @param username
+     * @return 회원 정보
+     */
+    private MemberEntity verifyMemberAccessAndRetrieve(Long memberId, String username) {
+        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!memberRepository.findByUsername(username).get().equals(member)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+        return member;
+    }
+
+    /**
      * 장소를 위시리스트에서 삭제합니다.
      *
      * @param placeId
      * @param memberId
      */
-    public void placeRemovedFromWishlist(Long placeId, Long memberId) {
-        // memberID 로 유저 찾기
-        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
+    public void placeRemovedFromWishlist(Long placeId, Long memberId, String username) {
+        // 접근 권한 확인 후 Member 반환.
+        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
@@ -116,8 +131,9 @@ public class WishlistService {
         return false;
     }
 
-    public List<WishlistResponseDto> wishlist(Long memberId) {
-        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    public List<WishlistResponseDto> wishlist(Long memberId, String username) {
+        // 접근 권한 확인 후 Member 반환.
+        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
 
         return member.getWishList().stream()
                 .map(place -> WishlistResponseDto.of(place, member))

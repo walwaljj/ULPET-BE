@@ -6,23 +6,28 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @Profile({"dev", "test"})
 public class InitData {
 
     @Bean
-    CommandLineRunner init(MemberRepository memberRepository) {
+    CommandLineRunner init(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+
+        String encodePassword = passwordEncoder.encode("abc1234!");
+
         return args -> {
+
             MemberEntity test1 = MemberEntity.builder()
-                    .email("test1@ulpet.com")
-                    .password("1234")
+                    .username("test1@ulpet.com")
+                    .password(encodePassword)
                     .nickname("test1")
                     .build();
 
             MemberEntity test2 = MemberEntity.builder()
-                    .email("test2@ulpet.com")
-                    .password("1234")
+                    .username("test2@ulpet.com")
+                    .password(encodePassword)
                     .nickname("test2")
                     .build();
 
