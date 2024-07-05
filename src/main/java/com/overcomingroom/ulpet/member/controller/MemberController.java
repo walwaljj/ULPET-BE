@@ -34,6 +34,20 @@ public class MemberController {
         );
     }
 
+    @PostMapping("/check-email")
+    public ResponseEntity<ResResult> isEmailExist(@RequestParam String email) {
+        var isEmailExist = memberService.isEmailExist(email);
+        ResponseCode responseCode = ResponseCode.MEMBER_EMAIL_CHECK_SUCCESS;
+        return ResponseEntity.ok(
+            ResResult.builder()
+                .responseCode(responseCode)
+                .code(responseCode.getCode())
+                .message(responseCode.getMessage())
+                .data(isEmailExist)
+                .build()
+        );
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ResResult> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         ResponseCode responseCode = ResponseCode.LOGIN_SUCCESSFUL;
