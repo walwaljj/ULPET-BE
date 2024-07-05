@@ -36,6 +36,7 @@ public class WebSecurityConfig {
                       "/v1/users/login",
                       "/v1/users/signup",
                       "/v1/users/password",
+                      "/v1/users/check-email",
                       "/swagger-ui/**",
                       "/swagger-resources/**",
                       "/v3/api-docs/**"

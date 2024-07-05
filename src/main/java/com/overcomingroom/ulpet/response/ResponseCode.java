@@ -13,6 +13,7 @@ public enum ResponseCode {
     MEMBER_SIGN_UP_SUCCESS(HttpStatus.OK, "200", "회원가입 성공"),
     MEMBER_WITHDRAWAL_SUCCESS(HttpStatus.OK, "200", "회원탈퇴 성공"),
     MEMBER_UPDATE_SUCCESS(HttpStatus.OK,"200", "회원정보 수정 성공"),
+    MEMBER_EMAIL_CHECK_SUCCESS(HttpStatus.OK, "200", "회원 이메일 조회 성공"),
 
     // Email
     EMAIL_SEND_SUCCESS(HttpStatus.OK, "200", "이메일 전송 성공"),

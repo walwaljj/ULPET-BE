@@ -23,12 +23,16 @@ public class InitData {
                     .username("test1@ulpet.com")
                     .password(encodePassword)
                     .nickname("test1")
+                    .familiarity(0.0f)
+                    .profileImage("https://avatar.iran.liara.run/public/1")
                     .build();
 
             MemberEntity test2 = MemberEntity.builder()
                     .username("test2@ulpet.com")
                     .password(encodePassword)
                     .nickname("test2")
+                    .familiarity(0.0f)
+                    .profileImage("https://avatar.iran.liara.run/public/2")
                     .build();
 
             memberRepository.save(test1);

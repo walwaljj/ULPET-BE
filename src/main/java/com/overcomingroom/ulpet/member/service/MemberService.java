@@ -237,4 +237,7 @@ public class MemberService implements UserDetailsService {
     return shuffledPassword.toString();
   }
 
+  public Boolean isEmailExist(String email) {
+    return memberRepository.findByUsername(email).isPresent();
+  }
 }
