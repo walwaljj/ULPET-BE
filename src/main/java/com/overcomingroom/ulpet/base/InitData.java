@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 @Configuration
 @Profile({"dev", "test"})
 public class InitData {
@@ -19,24 +21,30 @@ public class InitData {
 
         return args -> {
 
-            MemberEntity test1 = MemberEntity.builder()
-                    .username("test1@ulpet.com")
-                    .password(encodePassword)
-                    .nickname("test1")
-                    .familiarity(0.0f)
-                    .profileImage("https://avatar.iran.liara.run/public/1")
-                    .build();
+            Optional<MemberEntity> optionalTest1 = memberRepository.findByUsername("test1@ulpet.com");
+            Optional<MemberEntity> optionalTest2 = memberRepository.findByUsername("test2@ulpet.com");
 
-            MemberEntity test2 = MemberEntity.builder()
-                    .username("test2@ulpet.com")
-                    .password(encodePassword)
-                    .nickname("test2")
-                    .familiarity(0.0f)
-                    .profileImage("https://avatar.iran.liara.run/public/2")
-                    .build();
+            if (optionalTest1.isEmpty()) {
+                MemberEntity test1 = MemberEntity.builder()
+                        .username("test1@ulpet.com")
+                        .password(encodePassword)
+                        .nickname("test1")
+                        .familiarity(0.0f)
+                        .profileImage("https://avatar.iran.liara.run/public/1")
+                        .build();
+                memberRepository.save(test1);
+            }
 
-            memberRepository.save(test1);
-            memberRepository.save(test2);
+            if (optionalTest2.isEmpty()) {
+                MemberEntity test2 = MemberEntity.builder()
+                        .username("test2@ulpet.com")
+                        .password(encodePassword)
+                        .nickname("test2")
+                        .familiarity(0.0f)
+                        .profileImage("https://avatar.iran.liara.run/public/2")
+                        .build();
+                memberRepository.save(test2);
+            }
         };
     }
 }
