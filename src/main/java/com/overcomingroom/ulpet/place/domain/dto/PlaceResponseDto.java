@@ -9,6 +9,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Getter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -33,6 +36,9 @@ public class PlaceResponseDto {
 
     @Setter
     private String placeImageUrl; // 장소 이미지 url
+
+    @Setter
+    private Map<String, Integer> featureAndCount = new HashMap<>(); //특징
 
     public static PlaceResponseDto of(Place place) {
         return PlaceResponseDto.builder()

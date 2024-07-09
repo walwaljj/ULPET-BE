@@ -3,9 +3,7 @@ package com.overcomingroom.ulpet.place.domain.entity;
 import com.overcomingroom.ulpet.base.BaseEntity;
 import com.overcomingroom.ulpet.place.domain.Category;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -40,6 +38,8 @@ public class Place extends BaseEntity {
     private Category category;
 
     @ManyToMany
+    @Builder.Default
+    @ToString.Exclude
     private List<Feature> features = new ArrayList<>();
 
     /**

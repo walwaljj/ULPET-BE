@@ -1,5 +1,7 @@
 package com.overcomingroom.ulpet.place.domain;
 
+import com.overcomingroom.ulpet.exception.CustomException;
+import com.overcomingroom.ulpet.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +42,6 @@ public enum Category {
                 return category;
             }
         }
-        return null;
+        throw new CustomException(ErrorCode.CATEGORY_DOSE_NOT_EXIST);
     }
 }
