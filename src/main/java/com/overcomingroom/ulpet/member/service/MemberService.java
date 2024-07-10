@@ -133,6 +133,7 @@ public class MemberService implements UserDetailsService {
 
   public JwtResponseDto login(LoginRequestDto loginRequestDto) {
     var member = loadUserByUsername(loginRequestDto.username());
+
     if (passwordEncoder.matches(loginRequestDto.password(), member.getPassword())) {
       return JwtResponseDto.builder()
           .accessToken(jwtService.generateAccessToken(member))
@@ -141,6 +142,12 @@ public class MemberService implements UserDetailsService {
     } else {
       throw new CustomException(ErrorCode.LOGIN_ERROR);
     }
+  }
+
+  public Long getAuthenticatedUserId() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    var memberEntity = (MemberEntity) authentication.getPrincipal();
+    return memberEntity.getMemberId();
   }
 
   public JwtResponseDto reissueToken(HttpServletRequest request) {
