@@ -42,7 +42,7 @@ public class PlaceResponseDto {
                 .placeDescription(place.getPlaceDescription())
                 .address(place.getAddress())
                 .lat(place.getLat())
-                .lon(place.getLat())
+                .lon(place.getLon())
                 .category(place.getCategory())
                 .build();
     }

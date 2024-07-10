@@ -62,6 +62,19 @@ public class MemberController {
         );
     }
 
+    @GetMapping("/userId")
+    public ResponseEntity<ResResult> getUserId() {
+        ResponseCode responseCode = ResponseCode.MEMBER_ID_GET_SUCCESS;
+        return ResponseEntity.ok(
+            ResResult.builder()
+                .responseCode(responseCode)
+                .code(responseCode.getCode())
+                .message(responseCode.getMessage())
+                .data(memberService.getAuthenticatedUserId())
+                .build()
+        );
+    }
+
     @PostMapping("/reissue")
     public ResponseEntity<ResResult> reissue(HttpServletRequest request) {
         ResponseCode responseCode = ResponseCode.TOKEN_REISSUE_SUCCESS;
