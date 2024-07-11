@@ -77,7 +77,7 @@ class PlaceControllerTest {
     void 주소_검색() throws Exception {
 
 
-        Place place = placeRepository.findById(100L).get();
+        Place place = placeRepository.findById(1L).get();
 
         String placeName = place.getPlaceName();
         String address = place.getAddress();
@@ -89,7 +89,7 @@ class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].placeName").value(placeName))
-                .andExpect(jsonPath("$.data.size()").value(1))
+                .andExpect(jsonPath("$.data[0].address").value(address))
                 .andDo(print());
     }
 
