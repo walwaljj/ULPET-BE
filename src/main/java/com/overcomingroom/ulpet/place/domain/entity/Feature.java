@@ -6,9 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Builder
 @Getter
@@ -19,8 +16,4 @@ public class Feature {
     @Id
     @Column(unique = true)
     private String feature;
-
-    @ManyToMany(mappedBy = "features")
-    private List<Place> places = new ArrayList<>();
-
 }

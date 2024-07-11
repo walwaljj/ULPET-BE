@@ -247,4 +247,21 @@ public class MemberService implements UserDetailsService {
   public Boolean isEmailExist(String email) {
     return memberRepository.findByUsername(email).isPresent();
   }
+
+  /**
+   * 회원 접근 권한 확인, 확인 후 회원 정보 반환
+   *
+   * @param memberId
+   * @param username
+   * @return 회원 정보
+   */
+  public MemberEntity verifyMemberAccessAndRetrieve(Long memberId, String username) {
+    MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    if (!memberRepository.findByUsername(username).get().equals(member)) {
+      throw new CustomException(ErrorCode.ACCESS_DENIED);
+    }
+    return member;
+  }
+
 }

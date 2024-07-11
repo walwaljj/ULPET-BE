@@ -22,6 +22,7 @@ public class WishlistService {
 
     private final PlaceRepository placeRepository;
     private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
 
     /**
@@ -32,8 +33,9 @@ public class WishlistService {
      * @return WishlistResponseDto
      */
     public WishlistResponseDto placeAddedToWishlist(Long placeId, Long memberId, String username) {
+
         // 접근 권한 확인 후 Member 반환.
-        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
+        MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
 
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
@@ -54,22 +56,6 @@ public class WishlistService {
     }
 
     /**
-     * 회원 접근 권한 확인, 확인 후 회원 정보 반환
-     *
-     * @param memberId
-     * @param username
-     * @return 회원 정보
-     */
-    private MemberEntity verifyMemberAccessAndRetrieve(Long memberId, String username) {
-        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (!memberRepository.findByUsername(username).get().equals(member)) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
-        }
-        return member;
-    }
-
-    /**
      * 장소를 위시리스트에서 삭제합니다.
      *
      * @param placeId
@@ -77,7 +63,7 @@ public class WishlistService {
      */
     public void placeRemovedFromWishlist(Long placeId, Long memberId, String username) {
         // 접근 권한 확인 후 Member 반환.
-        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
+        MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
@@ -133,7 +119,7 @@ public class WishlistService {
 
     public List<WishlistResponseDto> wishlist(Long memberId, String username) {
         // 접근 권한 확인 후 Member 반환.
-        MemberEntity member = verifyMemberAccessAndRetrieve(memberId, username);
+        MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
 
         return member.getWishList().stream()
                 .map(place -> WishlistResponseDto.of(place, member))

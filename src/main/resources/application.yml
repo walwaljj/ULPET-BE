@@ -4,10 +4,10 @@ spring:
     include: secret
   jpa:
     hibernate:
-#            ddl-auto: create-drop
-      ddl-auto: update
+      ddl-auto: create-drop
+#              ddl-auto: update
     jdbc:
-        batch_size=50
+      batch_size=50
     properties:
       hibernate:
         show_sql: true
@@ -22,3 +22,7 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.hibernate.orm.jdbc.extract: TRACE
 
+servlet:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 10MB

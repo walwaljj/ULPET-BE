@@ -5,6 +5,7 @@ import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.service.WishlistService;
 import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.dto.PlaceResponseDto;
+import com.overcomingroom.ulpet.place.domain.entity.Feature;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.domain.entity.PlaceImage;
 import com.overcomingroom.ulpet.place.repository.PlaceImageRepository;
@@ -14,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +82,25 @@ public class PlaceService {
         PlaceResponseDto placeResponseDto = PlaceResponseDto.of(place);
         placeResponseDto.setPlaceImageUrl(getImageUrlByPlaceId(placeId));
 
+        // 특징 카운트
+        List<Feature> features = place.getFeatures();
+        Map<String, Integer> featureCountMap  = new HashMap<>();
+
+        for (Feature placeFeature : features) { // 장소의 특징을 가져옴
+
+            // map 에 추가하며 count 를 올림
+            // 1. 만약 key에 placeFeature 가 이미 추가되어 있다면 key를 추가하지 않고 value를 +1 올림
+            String feature = placeFeature.getFeature();
+            if (featureCountMap.containsKey(feature)) {
+                featureCountMap.put(feature, featureCountMap.get(feature) + 1);
+            }
+            //2. placeFeature 가 없다면 key와 value를 추가함.
+            else {featureCountMap.put(feature, 1);}
+
+        }
+
+        placeResponseDto.setFeatureAndCount(featureCountMap);
+
         return placeResponseDto;
     }
 
@@ -115,5 +138,43 @@ public class PlaceService {
 
         // 장소 삭제
         placeRepository.delete(place);
+    }
+
+    /**
+     * 사용자가 인증 시 장소를 등록합니다.
+     *
+     * @param placeName 장소 명
+     * @param address 주소
+     * @param memberId createdBy
+     * @param categoryName 카테고리 명 (문화 시설)
+     * @return
+     */
+    public Place userRegistersPlace(String placeName, String address, String categoryName, Long memberId){
+
+        // 울산 광역시가 포함된 주소만 허용됨.
+        if(!address.contains("울산광역시")){
+            throw new CustomException(ErrorCode.NOT_AN_ALLOWED_AREA);
+        }
+
+        Category findByCategoryName = Category.findByCategoryName(categoryName);
+        Place place = placeRepository.save(
+                Place.builder()
+                        .placeName(placeName)
+                        .address(address)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .createdBy(memberId)
+                        .category(findByCategoryName)
+                        .build()
+        );
+
+        placeImageRepository.save(
+                PlaceImage.builder()
+                        .placeId(place.getId())
+                        .imageUrl(null)
+                        .build()
+        );
+
+        return place;
     }
 }

@@ -32,7 +32,14 @@ public enum ResponseCode {
     PLACE_DETAIL(HttpStatus.OK, "200", "장소 상세 조회 성공"),
     PLACE_ADDED_TO_WISHLIST(HttpStatus.OK, "200", "위시리스트에 장소 추가 완료"),
     WISHLIST_READ_SUCCESSFUL(HttpStatus.OK, "200", "위시리스트 읽기 성공"),
-    PLACE_REMOVED_FROM_WISHLIST(HttpStatus.OK, "200", "위시리스트에서 장소가 삭제됨");
+    PLACE_REMOVED_FROM_WISHLIST(HttpStatus.OK, "200", "위시리스트에서 장소가 삭제됨"),
+
+    // Certification
+    CERTIFICATION_REGISTRATION_SUCCESSFUL(HttpStatus.OK, "200","장소 인증 등록 완료"),
+    CERTIFICATION_DETAIL_READ_SUCCESSFUL(HttpStatus.OK, "200","장소 상세 조회 성공"),
+    CERTIFICATION_LIST_FOR_PLACE(HttpStatus.OK, "200","장소에 대한 인증 리스트 조회 성공"),
+    USER_CERTIFICATION_LIST(HttpStatus.OK, "200","유저의 인증 리스트 조회 성공"),
+    CERTIFICATION_DELETE_SUCCESSFUL(HttpStatus.OK, "200", "인증 정보 삭제 성공");
 
     private final HttpStatus httpStatus;
     private final String code;
