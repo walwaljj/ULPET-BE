@@ -21,7 +21,8 @@ public class PlaceController {
     public ResponseEntity<ResResult> search(
             @RequestParam(value = "category", required = false) Category category, // 미입력 시 모든 카테고리 조회
             @RequestParam(value = "feature", required = false) String feature, // 미입력 시 모든 특징
-            @RequestParam(value = "keyword", required = false) String searchKeyword // 검색할 키워드 ( 장소 명 또는 주소 )
+            @RequestParam(value = "keyword", required = false) String searchKeyword, // 검색할 키워드 ( 장소 명 또는 주소 )
+            @RequestParam(value = "certificationSort", required = false, defaultValue = "false") boolean certificationSort // 인증 수 정렬 여부
     ) {
 
         ResponseCode resultCode = ResponseCode.PLACE_SEARCH;
@@ -31,7 +32,7 @@ public class PlaceController {
                         .responseCode(resultCode)
                         .code(resultCode.getCode())
                         .message(resultCode.getMessage())
-                        .data(placeService.searchPlaces(category, feature, searchKeyword))
+                        .data(placeService.searchPlaces(category, feature, searchKeyword, Boolean.valueOf(certificationSort)))
                         .build()
 
         );

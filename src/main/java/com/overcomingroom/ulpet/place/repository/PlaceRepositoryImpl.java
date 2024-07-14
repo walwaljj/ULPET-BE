@@ -4,12 +4,16 @@ import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.dto.PlaceResponseDto;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.repository.support.Querydsl4RepositorySupport;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.overcomingroom.ulpet.certification.domain.entity.QCertification.certification;
 import static com.overcomingroom.ulpet.place.domain.entity.QPlace.place;
 
 public class PlaceRepositoryImpl extends Querydsl4RepositorySupport implements PlaceRepositoryCustom {
@@ -29,14 +33,21 @@ public class PlaceRepositoryImpl extends Querydsl4RepositorySupport implements P
     @Override
     public List<PlaceResponseDto> search(Category category,
                                          String feature,
-                                         String searchKeyword) {
+                                         String searchKeyword,
+                                         boolean certificationSort) {
 
-        List<Place> placeList = selectFrom(place)
+        JPAQuery<Place> where = selectFrom(place)
                 .where(
                         categoryFilter(category),
                         featureFilter(feature),
                         searchFilter(searchKeyword)
-                ).fetch();
+                );
+
+        if (certificationSort) {
+            where.orderBy(isCertificationSort());
+        }
+
+        List<Place> placeList = where.fetch();
 
         List<PlaceResponseDto> placeResponseDtoList = new ArrayList<>();
 
@@ -101,8 +112,27 @@ public class PlaceRepositoryImpl extends Querydsl4RepositorySupport implements P
         if (feature == null || feature.isEmpty()) {
             return null; // 검색할 특징이 없을 때 필터링하지 않음
         }
-
         return place.features.any().feature.eq(feature);
+    }
+
+    /**
+     * 인증 이 많은 순서 대로 결과를 정렬합니다.
+     *
+     * @return OrderSpecifier
+     */
+    private OrderSpecifier<?> isCertificationSort() {
+        return new OrderSpecifier<>(Order.DESC, Expressions.asNumber(countCertification()));
+    }
+
+    /**
+     * 인증 정렬 서브 쿼리
+     *
+     * @return JPAQuery
+     */
+    private JPAQuery<Long> countCertification() {
+        return getQueryFactory().select(certification.count())
+                .from(certification)
+                .where(certification.place.eq(place));
     }
 
 }

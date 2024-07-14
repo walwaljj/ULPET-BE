@@ -9,7 +9,8 @@ public interface PlaceRepositoryCustom {
 
     List<PlaceResponseDto> search(Category category, // 카테고리
                                   String feature, // 특징
-                                  String searchKeyword); // 검색어
+                                  String searchKeyword, // 검색어
+                                  boolean certificationSort); // 인증 수 정렬 여부
 
     List<PlaceResponseDto> newRegisterPlaces(Long numberOfPlaces);
 }
