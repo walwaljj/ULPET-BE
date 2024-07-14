@@ -41,8 +41,9 @@ public class PlaceService {
      */
     public List<PlaceResponseDto> searchPlaces(Category category,
                                                String feature,
-                                               String searchKeyword) {
-        List<PlaceResponseDto> placeList = placeRepository.search(category, feature, searchKeyword);
+                                               String searchKeyword,
+                                               boolean certificationSort) {
+        List<PlaceResponseDto> placeList = placeRepository.search(category, feature, searchKeyword, certificationSort);
 
         // 이미지 매핑
         for (PlaceResponseDto placeResponseDto : placeList) {
