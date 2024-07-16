@@ -36,7 +36,10 @@ public enum ErrorCode {
     CERTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "인증 정보를 찾을 수 없습니다."),
     MEMBER_CERTIFICATION_LIST_IS_EMPTY(HttpStatus.NOT_FOUND, "멤버의 인증 정보가 비어있습니다."),
     CERTIFICATION_BEFORE_MIDNIGHT(HttpStatus.CONFLICT, "장소에 대한 하루 인증 횟수를 초과하였습니다. 해당 장소는 자정 이후에 인증이 가능합니다."),
-    NOT_AN_ALLOWED_AREA(HttpStatus.CONFLICT, "허용된 지역이 아닙니다.");
+    NOT_AN_ALLOWED_AREA(HttpStatus.CONFLICT, "허용된 지역이 아닙니다."),
+
+    // 이미지
+    NO_IMAGE(HttpStatus.BAD_REQUEST, "이미지를 첨부해 주세요");
 
     private final HttpStatus status;
     private final String msg;

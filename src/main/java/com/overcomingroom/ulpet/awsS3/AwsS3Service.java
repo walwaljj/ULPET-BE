@@ -133,7 +133,8 @@ public class AwsS3Service {
         String[] splitUrl = decodedFileName.split("/");
         String imageFilename = splitUrl[splitUrl.length - 1];
         String dirName = splitUrl[splitUrl.length - 2];
-        String setKey = dirName + "/" + imageFilename;
+        String rootDirNAme = splitUrl[splitUrl.length - 3];
+        String setKey = rootDirNAme + "/" + dirName + "/" + imageFilename;
 
         DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucket, setKey);
         try {

@@ -43,7 +43,7 @@ public class CertificationService {
     private final PlaceImageRepository placeImageRepository;
     private final PlaceService placeService;
     private final AwsS3Service awsS3Service;
-
+    private final String CERTIFICATION_PATH = "certification/";
 
     /**
      * 장소에 대한 인증 하기
@@ -59,7 +59,7 @@ public class CertificationService {
 
         // 이미지 파일이 없을 때
         if (multipartFile.isEmpty()) {
-            throw new IllegalArgumentException("이미지 파일을 첨부해주세요");
+            throw new CustomException(ErrorCode.NO_IMAGE);
         }
 
         // member 정보
@@ -113,8 +113,9 @@ public class CertificationService {
         // 특징 추가 목줄, 입마개등등 list 로 들어옴.
         List<Feature> featureList = certificationRequestDto.getFeatureList();
 
-        // 인증 이미지 S3에 업로드 ( 장소명 / 인증 사진명 )
-        String uploadImageUrl = awsS3Service.upload(multipartFile, place.getPlaceName());
+        // 인증 이미지 S3에 업로드 ( certification / 장소명 / 인증 사진명 )
+
+        String uploadImageUrl = awsS3Service.upload(multipartFile, CERTIFICATION_PATH + place.getPlaceName());
 
         place.getFeatures().addAll(featureRepository.saveAll(featureList));
 

@@ -2,6 +2,7 @@ package com.overcomingroom.ulpet.member.service;
 
 import com.overcomingroom.ulpet.auth.domain.dto.JwtResponseDto;
 import com.overcomingroom.ulpet.auth.service.JwtService;
+import com.overcomingroom.ulpet.awsS3.AwsS3Service;
 import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.domain.dto.LoginRequestDto;
@@ -16,6 +17,8 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +54,8 @@ public class MemberService implements UserDetailsService {
   private final JwtService jwtService;
   private final PasswordEncoder passwordEncoder;
   private final JavaMailSender javaMailSender;
+  private final AwsS3Service awsS3Service;
+  private final String MEMBER_PROFILE_PATH = "member-profile/";
   @Value("${spring.mail.username}")
   private String id;
 
@@ -159,8 +165,28 @@ public class MemberService implements UserDetailsService {
         .build();
   }
 
-  public Long updateMember(Long memberId, UpdateMemberRequestDto updateMemberRequestDto) {
+    /**
+     * 사용자의 프로필 수정 (PW, Nickname, profile)
+     * @param memberId
+     * @param updateMemberRequestDto
+     * @param multipartFile
+     * @return
+     * @throws IOException
+     */
+  public Long updateMember(Long memberId, UpdateMemberRequestDto updateMemberRequestDto, MultipartFile multipartFile) throws IOException {
     var member = getAuthenticatedUser(memberId);
+
+    // 이미지가 비어있는 경우
+    if(multipartFile.isEmpty()){
+      throw new CustomException(ErrorCode.NO_IMAGE);
+    }
+    // 이미지 파일이 비어있지 않고, 원래 이미지 url이 랜덤 이미지가 아니라면? S3에서 이미지를 삭제해야함.
+    else if(!multipartFile.isEmpty() && !member.profileImage().contains("https://avatar.iran.liara.run/public")){
+      awsS3Service.deleteFile(member.profileImage());
+    }
+
+    // s3에 이미지 업로드
+    String profileImageUrl = awsS3Service.upload(multipartFile, MEMBER_PROFILE_PATH + member.memberId());
 
     var memberEntity = memberRepository.save(
         MemberEntity.of(
@@ -168,7 +194,7 @@ public class MemberService implements UserDetailsService {
             member.username(),
             passwordEncoder.encode(updateMemberRequestDto.password()),
             updateMemberRequestDto.nickname(),
-            updateMemberRequestDto.profileImage(),
+            profileImageUrl,
             member.familiarity()
         )
     );
@@ -188,8 +214,11 @@ public class MemberService implements UserDetailsService {
         .build();
   }
 
-  public void withdrawalMember(Long memberId) {
+  public void withdrawalMember(Long memberId) throws UnsupportedEncodingException {
     var member = getAuthenticatedUser(memberId);
+    String filename = member.profileImage();
+    // 사용자 삭제 시 S3에서 이미지 파일 삭제
+    awsS3Service.deleteFile(filename);
     memberRepository.deleteById(member.memberId());
   }
 
