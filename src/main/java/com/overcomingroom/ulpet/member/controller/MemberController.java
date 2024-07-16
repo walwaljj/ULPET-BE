@@ -10,8 +10,13 @@ import com.overcomingroom.ulpet.response.ResponseCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/v1/users")
@@ -39,12 +44,12 @@ public class MemberController {
         var isEmailExist = memberService.isEmailExist(email);
         ResponseCode responseCode = ResponseCode.MEMBER_EMAIL_CHECK_SUCCESS;
         return ResponseEntity.ok(
-            ResResult.builder()
-                .responseCode(responseCode)
-                .code(responseCode.getCode())
-                .message(responseCode.getMessage())
-                .data(isEmailExist)
-                .build()
+                ResResult.builder()
+                        .responseCode(responseCode)
+                        .code(responseCode.getCode())
+                        .message(responseCode.getMessage())
+                        .data(isEmailExist)
+                        .build()
         );
     }
 
@@ -66,12 +71,12 @@ public class MemberController {
     public ResponseEntity<ResResult> getUserId() {
         ResponseCode responseCode = ResponseCode.MEMBER_ID_GET_SUCCESS;
         return ResponseEntity.ok(
-            ResResult.builder()
-                .responseCode(responseCode)
-                .code(responseCode.getCode())
-                .message(responseCode.getMessage())
-                .data(memberService.getAuthenticatedUserId())
-                .build()
+                ResResult.builder()
+                        .responseCode(responseCode)
+                        .code(responseCode.getCode())
+                        .message(responseCode.getMessage())
+                        .data(memberService.getAuthenticatedUserId())
+                        .build()
         );
     }
 
@@ -104,7 +109,7 @@ public class MemberController {
     }
 
     @DeleteMapping("/{userId}/withdrawal")
-    public ResponseEntity<ResResult> withdrawalMember(@PathVariable("userId") Long userId) {
+    public ResponseEntity<ResResult> withdrawalMember(@PathVariable("userId") Long userId) throws UnsupportedEncodingException {
         ResponseCode responseCode = ResponseCode.MEMBER_WITHDRAWAL_SUCCESS;
         memberService.withdrawalMember(userId);
         return ResponseEntity.ok(
@@ -116,11 +121,14 @@ public class MemberController {
         );
     }
 
-    @PutMapping("/{userId}/profile")
-    public ResponseEntity<ResResult> updateMember(@PathVariable("userId") Long userId, @Valid @RequestBody
-    UpdateMemberRequestDto updateMemberRequestDto) {
+    @PutMapping(value = "/{userId}/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResResult> updateMember(
+            @PathVariable("userId") Long userId,
+            @Valid @RequestPart(value = "updateMemberRequestDto") UpdateMemberRequestDto updateMemberRequestDto,
+            @RequestPart(value = "profileImage", required = false) MultipartFile multipartFile
+            ) throws IOException {
         ResponseCode responseCode = ResponseCode.MEMBER_UPDATE_SUCCESS;
-        Long memberId = memberService.updateMember(userId, updateMemberRequestDto);
+        Long memberId = memberService.updateMember(userId, updateMemberRequestDto, multipartFile);
         return ResponseEntity.ok(
                 ResResult.builder()
                         .responseCode(responseCode)

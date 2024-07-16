@@ -11,10 +11,8 @@ public record UpdateMemberRequestDto(
 
     @NotBlank(message = "닉네임은 필수 입력 값입니다.")
     @Pattern(regexp = "^[ㄱ-ㅎ가-힣a-z0-9-_]{2,10}$", message = "닉네임은 특수문자를 제외한 2~10자리여야 합니다.")
-    String nickname,
+    String nickname
 
-    @NotBlank(message = "프로필 이미지는 필수 입력 값입니다.")
-    String profileImage
 ) {
 
 }
