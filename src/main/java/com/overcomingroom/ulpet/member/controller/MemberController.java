@@ -109,9 +109,11 @@ public class MemberController {
     }
 
     @DeleteMapping("/{userId}/withdrawal")
-    public ResponseEntity<ResResult> withdrawalMember(@PathVariable("userId") Long userId) throws UnsupportedEncodingException {
+    public ResponseEntity<ResResult> withdrawalMember(@PathVariable("userId") Long userId,
+                                                      @RequestParam("password") String password) throws UnsupportedEncodingException {
         ResponseCode responseCode = ResponseCode.MEMBER_WITHDRAWAL_SUCCESS;
-        memberService.withdrawalMember(userId);
+
+        memberService.withdrawalMember(userId, password);
         return ResponseEntity.ok(
                 ResResult.builder()
                         .responseCode(responseCode)
@@ -126,7 +128,7 @@ public class MemberController {
             @PathVariable("userId") Long userId,
             @Valid @RequestPart(value = "updateMemberRequestDto") UpdateMemberRequestDto updateMemberRequestDto,
             @RequestPart(value = "profileImage", required = false) MultipartFile multipartFile
-            ) throws IOException {
+    ) throws IOException {
         ResponseCode responseCode = ResponseCode.MEMBER_UPDATE_SUCCESS;
         Long memberId = memberService.updateMember(userId, updateMemberRequestDto, multipartFile);
         return ResponseEntity.ok(

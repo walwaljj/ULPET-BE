@@ -214,8 +214,15 @@ public class MemberService implements UserDetailsService {
         .build();
   }
 
-  public void withdrawalMember(Long memberId) throws UnsupportedEncodingException {
+  public void withdrawalMember(Long memberId,String password) throws UnsupportedEncodingException {
     var member = getAuthenticatedUser(memberId);
+
+    // 비밀번호 검증 로직
+    if(!passwordEncoder.matches(password,member.password())){
+      throw new CustomException(ErrorCode.ACCESS_DENIED);
+    }
+
+
     String filename = member.profileImage();
     // 사용자 삭제 시 S3에서 이미지 파일 삭제
     awsS3Service.deleteFile(filename);
