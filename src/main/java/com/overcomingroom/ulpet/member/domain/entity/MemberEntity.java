@@ -42,8 +42,8 @@ public class MemberEntity extends BaseEntityMember implements UserDetails {
 
     private Float familiarity = 0.0f;
 
-    @ManyToMany
-    private List<Place> wishList = new ArrayList<>();
+    @OneToOne
+    private Wishlist wishList;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

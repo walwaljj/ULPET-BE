@@ -4,7 +4,9 @@ import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.domain.dto.WishlistResponseDto;
 import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
+import com.overcomingroom.ulpet.member.domain.entity.Wishlist;
 import com.overcomingroom.ulpet.member.repository.MemberRepository;
+import com.overcomingroom.ulpet.member.repository.WishlistRepository;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -23,6 +27,7 @@ public class WishlistService {
     private final PlaceRepository placeRepository;
     private final MemberRepository memberRepository;
     private final MemberService memberService;
+    private final WishlistRepository wishlistRepository;
 
 
     /**
@@ -40,16 +45,30 @@ public class WishlistService {
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
-        List<Place> wishList = member.getWishList();
+        // 위시리스트 찾기
+        Optional<Wishlist> optionalWishlist = wishlistRepository.findById(memberId);
 
-        // 저장 된 장소인지 확인
-        if (isAlreadySave(wishList, place))
-            throw new CustomException(ErrorCode.PLACE_ALREADY_SAVED_TO_WISHLIST);
+        Wishlist wishlist;
 
-        //member 의 list 에 추가하기
-        wishList.add(place);
+        if (!optionalWishlist.isPresent()) {
+            wishlist = wishlistRepository.save(Wishlist.builder()
+                    .memberId(memberId)
+                    .place(new ArrayList<>())
+                    .build());
+
+        } else {
+            wishlist = optionalWishlist.get();
+            // 저장 된 장소인지 확인
+            if (isAlreadySave(wishlist.getPlace(), place))
+                throw new CustomException(ErrorCode.PLACE_ALREADY_SAVED_TO_WISHLIST);
+        }
+
+        wishlist.getPlace().add(place);
 
         // 저장
+        wishlistRepository.save(wishlist);
+
+        member.setWishList(wishlist);
         memberRepository.save(member);
 
         return WishlistResponseDto.of(place, member);
@@ -66,33 +85,39 @@ public class WishlistService {
         MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
         // 장소 찾기
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
+        // 위시리스트 찾기
+        Optional<Wishlist> optionalWishlist = wishlistRepository.findById(memberId);
 
-        List<Place> wishList = member.getWishList();
+        if (!optionalWishlist.isPresent()) {
+            throw new CustomException(ErrorCode.WISHLIST_EMPTY);
+        }
+
+        Wishlist wishlist = member.getWishList();
 
         // 저장 된 장소인지 확인
-        if (!isAlreadySave(wishList, place))
+        if (!isAlreadySave(wishlist.getPlace(), place))
             throw new CustomException(ErrorCode.PLACE_NOT_SAVED_IN_WISHLIST);
 
         //member 의 wishlist 에서 삭제
-        wishList.remove(place);
+        wishlist.getPlace().remove(place);
 
         // 저장
-        memberRepository.save(member);
+        wishlistRepository.save(member.getWishList());
     }
 
     /**
-     * 삭제된 장소를 포함하고 있던 멤버를 찾고, 위시리스트에서 장소를 삭제합니다.
+     * 삭제된 장소를 포함하고있던 위시리스트를 찾고 삭제합니다.
      *
      * @param place 삭제 장소
      */
     public void PreRemovePlaceFromWishList(Place place) {
-        List<MemberEntity> memberList = memberRepository.findAll();
 
-        for (MemberEntity member : memberList) {
-            List<Place> wishList = member.getWishList();
-            if (isAlreadySave(wishList, place)) {
-                wishList.remove(place);
-                memberRepository.save(member);
+        List<Wishlist> wishlistRepositoryAll = wishlistRepository.findAll();
+
+        for (Wishlist wishlist : wishlistRepositoryAll) {
+            if (isAlreadySave(wishlist.getPlace(), place)) {
+                wishlist.getPlace().remove(place);
+                wishlistRepository.save(wishlist);
             }
         }
     }
@@ -121,7 +146,16 @@ public class WishlistService {
         // 접근 권한 확인 후 Member 반환.
         MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
 
-        return member.getWishList().stream()
+        // 위시리스트 찾기
+        Optional<Wishlist> optionalWishlist = wishlistRepository.findById(memberId);
+
+        if (!optionalWishlist.isPresent()) {
+            throw new CustomException(ErrorCode.WISHLIST_EMPTY);
+        }
+
+        Wishlist wishList = optionalWishlist.get();
+
+        return wishList.getPlace().stream()
                 .map(place -> WishlistResponseDto.of(place, member))
                 .toList();
     }
