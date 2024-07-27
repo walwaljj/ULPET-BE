@@ -1,5 +1,9 @@
 package com.overcomingroom.ulpet.place.service;
 
+import com.overcomingroom.ulpet.certification.domain.entity.Certification;
+import com.overcomingroom.ulpet.certification.domain.entity.CertificationFeature;
+import com.overcomingroom.ulpet.certification.repository.CertificationFeatureRepository;
+import com.overcomingroom.ulpet.certification.repository.CertificationRepository;
 import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.service.WishlistService;
@@ -28,7 +32,8 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final PlaceImageRepository placeImageRepository;
     private final WishlistService wishlistService;
-
+    private final CertificationFeatureRepository certificationFeatureRepository;
+    private final CertificationRepository certificationRepository;
 
     /**
      * 통합 검색을 합니다.
@@ -84,20 +89,26 @@ public class PlaceService {
         placeResponseDto.setPlaceImageUrl(getImageUrlByPlaceId(placeId));
 
         // 특징 카운트
-        List<Feature> features = place.getFeatures();
-        Map<String, Integer> featureCountMap  = new HashMap<>();
+        List<Certification> certifications = place.getCertifications();
+        Map<String, Integer> featureCountMap = new HashMap<>();
 
-        for (Feature placeFeature : features) { // 장소의 특징을 가져옴
+        for (Certification certification : certifications) {
+            List<CertificationFeature> certificationFeatures = certification.getCertificationFeatures();
+            // 장소의 특징을 가져옴
+            for (CertificationFeature certificationFeature : certificationFeatures) {
 
-            // map 에 추가하며 count 를 올림
-            // 1. 만약 key에 placeFeature 가 이미 추가되어 있다면 key를 추가하지 않고 value를 +1 올림
-            String feature = placeFeature.getFeature();
-            if (featureCountMap.containsKey(feature)) {
-                featureCountMap.put(feature, featureCountMap.get(feature) + 1);
+                // map 에 추가하며 count 를 올림
+                // 1. 만약 key에 placeFeature 가 이미 추가되어 있다면 key를 추가하지 않고 value를 +1 올림
+                Feature feature = certificationFeature.getFeature();
+                if (featureCountMap.containsKey(feature.getFeature().toString())) {
+                    featureCountMap.put(feature.getFeature().toString(), featureCountMap.get(feature.getFeature()) + 1);
+                }
+                //2. placeFeature 가 없다면 key와 value를 추가함.
+                else {
+                    featureCountMap.put(feature.getFeature().toString(), 1);
+                }
+
             }
-            //2. placeFeature 가 없다면 key와 value를 추가함.
-            else {featureCountMap.put(feature, 1);}
-
         }
 
         placeResponseDto.setFeatureAndCount(featureCountMap);
@@ -144,16 +155,16 @@ public class PlaceService {
     /**
      * 사용자가 인증 시 장소를 등록합니다.
      *
-     * @param placeName 장소 명
-     * @param address 주소
-     * @param memberId createdBy
+     * @param placeName    장소 명
+     * @param address      주소
+     * @param memberId     createdBy
      * @param categoryName 카테고리 명 (문화 시설)
      * @return
      */
-    public Place userRegistersPlace(String placeName, String address, String categoryName, Long memberId){
+    public Place userRegistersPlace(String placeName, String address, String categoryName, Long memberId) {
 
         // 울산 광역시가 포함된 주소만 허용됨.
-        if(!address.contains("울산광역시")){
+        if (!address.contains("울산광역시")) {
             throw new CustomException(ErrorCode.NOT_AN_ALLOWED_AREA);
         }
 

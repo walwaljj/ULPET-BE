@@ -4,6 +4,8 @@ import com.overcomingroom.ulpet.awsS3.AwsS3Service;
 import com.overcomingroom.ulpet.certification.domain.dto.CertificationRequestDto;
 import com.overcomingroom.ulpet.certification.domain.dto.CertificationResponseDto;
 import com.overcomingroom.ulpet.certification.domain.entity.Certification;
+import com.overcomingroom.ulpet.certification.domain.entity.CertificationFeature;
+import com.overcomingroom.ulpet.certification.repository.CertificationFeatureRepository;
 import com.overcomingroom.ulpet.certification.repository.CertificationRepository;
 import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +46,7 @@ public class CertificationService {
     private final PlaceImageRepository placeImageRepository;
     private final PlaceService placeService;
     private final AwsS3Service awsS3Service;
+    private final CertificationFeatureRepository certificationFeatureRepository;
     private final String CERTIFICATION_PATH = "certification/";
 
     /**
@@ -117,10 +121,6 @@ public class CertificationService {
 
         String uploadImageUrl = awsS3Service.upload(multipartFile, CERTIFICATION_PATH + place.getPlaceName());
 
-        place.getFeatures().addAll(featureRepository.saveAll(featureList));
-
-        Place savePlace = placeRepository.save(place);
-
         // 이미지 사용 여부
         boolean useImage = certificationRequestDto.isUseImage();
 
@@ -134,16 +134,37 @@ public class CertificationService {
             }
         }
 
+        List<Feature> features = new ArrayList<>();
+
         // 인증 저장
+        for (Feature feature : featureList) {
+            Optional<Feature> optionalFeature = featureRepository.findById(feature.getFeature());
+            if (!optionalFeature.isPresent()) {
+                Feature saveFeature = featureRepository.save(feature);
+                features.add(saveFeature);
+            } else {
+                features.add(optionalFeature.get());
+            }
+        }
+
         Certification certification = certificationRepository.save(Certification.builder()
                 .certificationImageUrl(uploadImageUrl)
                 .member(member)
-                .place(savePlace)
-                .features(featureList)
+                .place(place)
                 .useImage(useImage)
                 .build());
 
-        return CertificationResponseDto.of(certification);
+        List<CertificationFeature> certificationFeatures = certificationFeatureRepository.saveAll(
+                features.stream()
+                        .map(feature -> CertificationFeature.certateCertificationFeature(certification, feature))
+                        .toList());
+
+        certification.setCertificationFeatures(certificationFeatures);
+
+        place.getCertifications().add(certification);
+        placeRepository.save(place);
+
+        return CertificationResponseDto.of(certification, features);
     }
 
 
@@ -162,7 +183,26 @@ public class CertificationService {
         // member 검증 및 반환
         MemberEntity member = memberService.verifyMemberAccessAndRetrieve(certification.getMember().getMemberId(), username);
 
-        return CertificationResponseDto.of(certification);
+        List<Feature> featureList = getFeatures(certification);
+
+        return CertificationResponseDto.of(certification, featureList);
+    }
+
+    /**
+     * 인증을 통해 중간 테이블에서 특징들을 조회하고 list 형태로 모아 반환합니다.
+     *
+     * @param certification 인증
+     * @return List<Feature>
+     */
+    private List<Feature> getFeatures(Certification certification) {
+        List<CertificationFeature> certificationFeatures = certification.getCertificationFeatures();
+
+        List<Feature> featureList = new ArrayList<>();
+
+        for (CertificationFeature certificationFeature : certificationFeatures) {
+            featureList.add(certificationFeature.getFeature());
+        }
+        return featureList;
     }
 
     /**
@@ -175,9 +215,14 @@ public class CertificationService {
 
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
-        List<Certification> allByPlace = certificationRepository.findAllByPlace(place);
+        List<Certification> certifications = certificationRepository.findAllByPlace(place);
 
-        return allByPlace.stream().map(o -> CertificationResponseDto.of(o)).toList();
+        List<CertificationResponseDto> certificationResponseDtoList = new ArrayList<>();
+        for (Certification certification : certifications) {
+            certificationResponseDtoList.add(CertificationResponseDto.of(certification, getFeatures(certification)));
+
+        }
+        return certificationResponseDtoList;
     }
 
     /**
@@ -196,7 +241,12 @@ public class CertificationService {
 
         List<Certification> certifications = certificationRepository.findAllByMember(member).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_CERTIFICATION_LIST_IS_EMPTY));
 
-        return certifications.stream().map(o -> CertificationResponseDto.of(o)).toList();
+        List<CertificationResponseDto> certificationResponseDtoList = new ArrayList<>();
+        for (Certification certification : certifications) {
+            certificationResponseDtoList.add(CertificationResponseDto.of(certification, getFeatures(certification)));
+        }
+
+        return certificationResponseDtoList;
     }
 
     /**
@@ -225,26 +275,17 @@ public class CertificationService {
             placeImageRepository.save(placeImage);
         }
 
-        // 멤버가 인증을 직접 삭제하는 경우
         // 특징 삭제, S3에서 이미지 삭제
-        if (deletedByMember) {
-            List<Feature> features = certification.getFeatures();
-            // 특정 장소에 매핑된 특징 삭제
-            List<Feature> placeAllFeatures = place.getFeatures();
-            for (Feature allFeature : features) {
-                for (Feature placeAllFeature : placeAllFeatures) {
-                    if (allFeature.equals(placeAllFeature)) {
-                        placeAllFeatures.remove(allFeature);
-                        break;
-                    }
-                }
-            }
-            placeRepository.save(place);
-            // S3 이미지 삭제
-            awsS3Service.deleteFile(certificationImageUrl);
-            // 인증 삭제
-            certificationRepository.delete(certification);
-        }
+        // 중간 테이블에서 삭제
+        List<CertificationFeature> certificationFeatures = certificationFeatureRepository.findByCertification(certification).get();
+        certificationFeatureRepository.deleteAll(certificationFeatures);
+
+        place.getCertifications().remove(certification);
+        placeRepository.save(place);
+        // S3 이미지 삭제
+        awsS3Service.deleteFile(certificationImageUrl);
+        // 인증 삭제
+        certificationRepository.delete(certification);
     }
 
     /**

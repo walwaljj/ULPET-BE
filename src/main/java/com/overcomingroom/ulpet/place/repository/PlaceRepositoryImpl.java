@@ -112,7 +112,7 @@ public class PlaceRepositoryImpl extends Querydsl4RepositorySupport implements P
         if (feature == null || feature.isEmpty()) {
             return null; // 검색할 특징이 없을 때 필터링하지 않음
         }
-        return place.features.any().feature.eq(feature);
+        return place.certifications.any().certificationFeatures.any().feature.feature.eq(feature);
     }
 
     /**

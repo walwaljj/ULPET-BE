@@ -30,13 +30,23 @@ public class CertificationResponseDto {
      * @param certification
      * @return CertificationResponseDto
      */
+    public static CertificationResponseDto of(Certification certification, List<Feature> featureList) {
+        return CertificationResponseDto.builder()
+                .certificationImageUrl(certification.getCertificationImageUrl())
+                .nickname(certification.getMember().getNickname())
+                .placeName(certification.getPlace().getPlaceName())
+                .address(certification.getPlace().getAddress())
+                .featureList(featureList)
+                .localDateTime(certification.getCreatedAt())
+                .build();
+    }
+
     public static CertificationResponseDto of(Certification certification) {
         return CertificationResponseDto.builder()
                 .certificationImageUrl(certification.getCertificationImageUrl())
                 .nickname(certification.getMember().getNickname())
                 .placeName(certification.getPlace().getPlaceName())
                 .address(certification.getPlace().getAddress())
-                .featureList(certification.getFeatures())
                 .localDateTime(certification.getCreatedAt())
                 .build();
     }

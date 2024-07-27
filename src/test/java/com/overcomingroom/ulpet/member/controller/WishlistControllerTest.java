@@ -5,7 +5,9 @@ import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.domain.dto.LoginRequestDto;
 import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
+import com.overcomingroom.ulpet.member.domain.entity.Wishlist;
 import com.overcomingroom.ulpet.member.repository.MemberRepository;
+import com.overcomingroom.ulpet.member.repository.WishlistRepository;
 import com.overcomingroom.ulpet.member.service.MemberService;
 import com.overcomingroom.ulpet.member.service.WishlistService;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
@@ -46,6 +48,8 @@ class WishlistControllerTest {
     WishlistService wishlistService;
     @Autowired
     MemberService memberService;
+    @Autowired
+    WishlistRepository wishlistRepository;
     MemberEntity test1;
     String accessToken = "accessToken";
 
@@ -63,7 +67,11 @@ class WishlistControllerTest {
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
         // 유저 위시리스트 추가
-        test1.getWishList().add(place);
+        Wishlist wishlist = wishlistRepository.save(Wishlist.builder()
+                .memberId(test1.getMemberId())
+                .place(List.of(place))
+                .build());
+        test1.setWishList(wishlist);
         memberRepository.save(test1);
     }
 
@@ -75,10 +83,10 @@ class WishlistControllerTest {
 
         Long memberId = test1.getMemberId();
 
-        List<Place> wishList = memberRepository.findById(memberId).get().getWishList();
+        List<Place> wishlist = wishlistRepository.findById(memberId).get().getPlace();
 
         // 유저의 위시리스트에 장소가 없는게 맞는지 확인
-        assertThat(wishList)
+        assertThat(wishlist)
                 .extracting("id")
                 .doesNotContain(placeId);
 
@@ -92,7 +100,7 @@ class WishlistControllerTest {
                 .andDo(print());
 
         // then 유저의 위시리스트에 장소가 추가되었는지 확인
-        assertThat(wishList)
+        assertThat(wishlist)
                 .extracting("id")
                 .contains(placeId);
     }

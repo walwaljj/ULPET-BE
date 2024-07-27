@@ -1,7 +1,9 @@
 package com.overcomingroom.ulpet.place.service;
 
 import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
+import com.overcomingroom.ulpet.member.domain.entity.Wishlist;
 import com.overcomingroom.ulpet.member.repository.MemberRepository;
+import com.overcomingroom.ulpet.member.repository.WishlistRepository;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.repository.PlaceRepository;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,8 @@ class PlaceServiceTest {
     MemberRepository memberRepository;
     @Autowired
     PlaceRepository placeRepository;
+    @Autowired
+    WishlistRepository wishlistRepository;
 
     @Test
     void 장소_삭제_테스트() {
@@ -31,12 +35,18 @@ class PlaceServiceTest {
 
         MemberEntity member = memberRepository.findById(1L).get();
 
-        List<Place> wishList = member.getWishList();
-
         Place place1 = placeRepository.findById(1L).get();
         Place place2 = placeRepository.findById(2L).get();
-        wishList.add(place1);
-        wishList.add(place2);
+
+        // 유저 위시리스트 추가
+        Wishlist wishlist = wishlistRepository.save(Wishlist.builder()
+                .memberId(member.getMemberId())
+                .place(List.of(place1, place2))
+                .build());
+
+        wishlistRepository.save(wishlist);
+
+        member.setWishList(wishlist);
         memberRepository.save(member);
 
         //when
@@ -44,14 +54,14 @@ class PlaceServiceTest {
         placeService.deletePlace(id);
 
         //then
-        assertThat(wishList)
+        assertThat(wishlist.getPlace())
                 .extracting("id")
                 .doesNotContain(place1.getId());
 
-        assertThat(wishList)
+        assertThat(wishlist.getPlace())
                 .extracting("id")
                 .contains(place2.getId());
 
-        assertThat(wishList.size()).isEqualTo(1);
+        assertThat(wishlist.getPlace().size()).isEqualTo(1);
     }
 }
