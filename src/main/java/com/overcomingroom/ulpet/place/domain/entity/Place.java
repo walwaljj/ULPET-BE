@@ -1,9 +1,13 @@
 package com.overcomingroom.ulpet.place.domain.entity;
 
 import com.overcomingroom.ulpet.base.BaseEntity;
+import com.overcomingroom.ulpet.certification.domain.entity.Certification;
 import com.overcomingroom.ulpet.place.domain.Category;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -37,10 +41,9 @@ public class Place extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @ManyToMany
-    @Builder.Default
-    @ToString.Exclude
-    private List<Feature> features = new ArrayList<>();
+    @OneToMany
+    @Setter
+    private List<Certification> certifications = new ArrayList<>();
 
     /**
      * 위도, 경도를 소숫점 6자리 까지 변환함.
