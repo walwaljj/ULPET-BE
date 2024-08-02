@@ -12,13 +12,13 @@ import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.domain.entity.MemberEntity;
 import com.overcomingroom.ulpet.member.repository.MemberRepository;
 import com.overcomingroom.ulpet.member.service.MemberService;
+import com.overcomingroom.ulpet.place.domain.Category;
 import com.overcomingroom.ulpet.place.domain.entity.Feature;
 import com.overcomingroom.ulpet.place.domain.entity.Place;
 import com.overcomingroom.ulpet.place.domain.entity.PlaceImage;
 import com.overcomingroom.ulpet.place.repository.FeatureRepository;
 import com.overcomingroom.ulpet.place.repository.PlaceImageRepository;
 import com.overcomingroom.ulpet.place.repository.PlaceRepository;
-import com.overcomingroom.ulpet.place.service.PlaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,6 @@ public class CertificationService {
     private final MemberService memberService;
     private final MemberRepository memberRepository;
     private final PlaceImageRepository placeImageRepository;
-    private final PlaceService placeService;
     private final AwsS3Service awsS3Service;
     private final CertificationFeatureRepository certificationFeatureRepository;
     private final String CERTIFICATION_PATH = "certification/";
@@ -93,12 +92,32 @@ public class CertificationService {
             Optional<Place> findByPlaceNameAndAddress = placeRepository.findByPlaceNameAndAddress(placeName, address);
             if (!findByPlaceNameAndAddress.isPresent()) {
                 // 사용자에 의해 새로운 장소가 등록됨.
-                place = placeService.userRegistersPlace(placeName, address, categoryName, memberId);
-                log.info("2-1. register = {}", place.getPlaceName());
+                // 울산 광역시가 포함된 주소만 허용됨.
+                if (!address.contains("울산광역시")) {
+                    throw new CustomException(ErrorCode.NOT_AN_ALLOWED_AREA);
+                }
+
+                Category findByCategoryName = Category.findByCategoryName(categoryName);
+                place = placeRepository.save(
+                        Place.builder()
+                                .placeName(placeName)
+                                .address(address)
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .createdBy(memberId)
+                                .category(findByCategoryName)
+                                .build()
+                );
+
+                placeImageRepository.save(
+                        PlaceImage.builder()
+                                .placeId(place.getId())
+                                .imageUrl(null)
+                                .build()
+                );
 
             } else {
                 place = findByPlaceNameAndAddress.get();
-                log.info("2-2. findByPlaceNameAndAddress = {}", place.getPlaceName());
             }
         }
         // 입력이 잘못 됨.
@@ -152,7 +171,10 @@ public class CertificationService {
                 .member(member)
                 .place(place)
                 .useImage(useImage)
+                .familiarity(3.0f)
                 .build());
+
+        setFamiliarity(place, certification, member);
 
         List<CertificationFeature> certificationFeatures = certificationFeatureRepository.saveAll(
                 features.stream()
@@ -167,6 +189,38 @@ public class CertificationService {
         return CertificationResponseDto.of(certification, features);
     }
 
+    /**
+     * 친밀도를 부여합니다. (장소에 인증 건수가 3개 이하 라면 친밀도 두 배)
+     *
+     * @param place  인증 대상 장소
+     * @param member 인증 멤버
+     */
+    private void setFamiliarity(Place place, Certification certification, MemberEntity member) {
+
+        Float familiarity = 0.0f;
+
+        if (place.getCertifications().size() <= 3) {
+            familiarity = calFamiliarity(certification, true);
+        } else {
+            familiarity = calFamiliarity(certification, false);
+        }
+
+        certification.setFamiliarity(familiarity);
+
+        Certification saveFamiliarity = certificationRepository.save(certification);
+
+        member.setFamiliarity(member.getFamiliarity() + saveFamiliarity.getFamiliarity());
+
+        memberRepository.save(member);
+    }
+
+    public Float calFamiliarity(Certification certification, boolean isNewRegisteredPlace) {
+        if (isNewRegisteredPlace) {
+            return certification.getFamiliarity() * 2.0f;
+        } else {
+            return certification.getFamiliarity();
+        }
+    }
 
     /**
      * 인증 상세 정보를 반환 합니다.
@@ -250,7 +304,7 @@ public class CertificationService {
     }
 
     /**
-     * 유저가 인증을 삭제합니다.
+     * 인증을 삭제합니다.
      *
      * @param certificationId 삭제할 id
      * @param username        login username
@@ -262,7 +316,7 @@ public class CertificationService {
         Long memberId = certification.getMember().getMemberId();
 
         // member 검증 및 반환
-        memberService.verifyMemberAccessAndRetrieve(memberId, username);
+        MemberEntity member = memberService.verifyMemberAccessAndRetrieve(memberId, username);
 
         Place place = certification.getPlace();
         String certificationImageUrl = certification.getCertificationImageUrl();
@@ -275,15 +329,25 @@ public class CertificationService {
             placeImageRepository.save(placeImage);
         }
 
-        // 특징 삭제, S3에서 이미지 삭제
+        // 특징 삭제
         // 중간 테이블에서 삭제
         List<CertificationFeature> certificationFeatures = certificationFeatureRepository.findByCertification(certification).get();
         certificationFeatureRepository.deleteAll(certificationFeatures);
 
         place.getCertifications().remove(certification);
         placeRepository.save(place);
+
         // S3 이미지 삭제
         awsS3Service.deleteFile(certificationImageUrl);
+
+        // 유저가 인증 직접 삭제
+        // 친밀도, 인증 삭제
+        if (deletedByMember) {
+            // 친밀도
+            member.setFamiliarity(member.getFamiliarity() - certification.getFamiliarity());
+            memberRepository.save(member);
+        }
+
         // 인증 삭제
         certificationRepository.delete(certification);
     }

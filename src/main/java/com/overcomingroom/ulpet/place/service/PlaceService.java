@@ -2,8 +2,7 @@ package com.overcomingroom.ulpet.place.service;
 
 import com.overcomingroom.ulpet.certification.domain.entity.Certification;
 import com.overcomingroom.ulpet.certification.domain.entity.CertificationFeature;
-import com.overcomingroom.ulpet.certification.repository.CertificationFeatureRepository;
-import com.overcomingroom.ulpet.certification.repository.CertificationRepository;
+import com.overcomingroom.ulpet.certification.service.CertificationService;
 import com.overcomingroom.ulpet.exception.CustomException;
 import com.overcomingroom.ulpet.exception.ErrorCode;
 import com.overcomingroom.ulpet.member.service.WishlistService;
@@ -19,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +31,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final PlaceImageRepository placeImageRepository;
     private final WishlistService wishlistService;
-    private final CertificationFeatureRepository certificationFeatureRepository;
-    private final CertificationRepository certificationRepository;
+    private final CertificationService certificationService;
 
     /**
      * 통합 검색을 합니다.
@@ -141,52 +139,23 @@ public class PlaceService {
      * 장소를 삭제합니다.
      */
     @Transactional
-    public void deletePlace(Long placeId) {
+    public void deletePlace(Long placeId) throws UnsupportedEncodingException {
 
         Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
         // 위시리스트에서 장소 삭제
         wishlistService.PreRemovePlaceFromWishList(place);
 
-        // 장소 삭제
-        placeRepository.delete(place);
-    }
+        List<Certification> certifications = place.getCertifications();
 
-    /**
-     * 사용자가 인증 시 장소를 등록합니다.
-     *
-     * @param placeName    장소 명
-     * @param address      주소
-     * @param memberId     createdBy
-     * @param categoryName 카테고리 명 (문화 시설)
-     * @return
-     */
-    public Place userRegistersPlace(String placeName, String address, String categoryName, Long memberId) {
-
-        // 울산 광역시가 포함된 주소만 허용됨.
-        if (!address.contains("울산광역시")) {
-            throw new CustomException(ErrorCode.NOT_AN_ALLOWED_AREA);
+        if (!certifications.isEmpty()) {
+            for (Certification certification : certifications) {
+                // 인증 삭제
+                certificationService.certificationDelete(certification.getId(), certification.getMember().getUsername(), false);
+            }
         }
 
-        Category findByCategoryName = Category.findByCategoryName(categoryName);
-        Place place = placeRepository.save(
-                Place.builder()
-                        .placeName(placeName)
-                        .address(address)
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .createdBy(memberId)
-                        .category(findByCategoryName)
-                        .build()
-        );
-
-        placeImageRepository.save(
-                PlaceImage.builder()
-                        .placeId(place.getId())
-                        .imageUrl(null)
-                        .build()
-        );
-
-        return place;
+        // 장소 삭제
+        placeRepository.delete(place);
     }
 }
