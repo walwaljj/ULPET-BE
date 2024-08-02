@@ -32,10 +32,16 @@ public class Certification extends BaseEntityMember {
 
     private boolean useImage;
 
+    @JsonIgnore
+    @Setter
+    private Float familiarity;
+
     @OneToMany(mappedBy = "certification", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude
     @JsonIgnore
     @Setter
     private List<CertificationFeature> certificationFeatures = new ArrayList<>();
+
+
 }

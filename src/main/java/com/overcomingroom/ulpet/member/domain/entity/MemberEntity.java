@@ -1,7 +1,6 @@
 package com.overcomingroom.ulpet.member.domain.entity;
 
 import com.overcomingroom.ulpet.base.BaseEntityMember;
-import com.overcomingroom.ulpet.place.domain.entity.Place;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -9,10 +8,8 @@ import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @Entity
 @Getter
